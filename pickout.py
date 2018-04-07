@@ -67,7 +67,6 @@ def retrieve_all_data():
             query = "SELECT DISTINCT * FROM protein_csv" # Get all information
             results = cursor.execute(query)
 
-            # conn.commit() # <- Is it necessary to write this line?
             conn.commit()
     except sqlite3.Error as e:
         sys.stderr.write("%s\n" % e)
