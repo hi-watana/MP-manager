@@ -122,7 +122,7 @@ def get_mito_id_gene_id_pairs():
 
 
 def get_uniprot_info(accs):
-    # Map each UniProtAC to the following things:
+    # Map each UniProt AC to the following things:
     #   * protein names
     #   * gene names
     #   * organism
@@ -178,19 +178,22 @@ def map_id(iterator, from_abbrev, to_abbrev):
             )
 
 def get_with_sleep(f, iterator, group_n=100):
+    # Take sleep in order to avoid server overload
+    #
+    # Split iterator in order to reduce data traffic per connection
     return iterator_tools.concat_iterator(
             *map_with_sleep(f, iterator_tools.split_iterator(iterator, group_n)))
 
 def get_uniprot_acs(gene_ids):
-    # Map Gene IDs to UniProtACs.
+    # Map Gene IDs to UniProt ACs.
     return map_id(gene_ids, "P_ENTREZGENEID", "ACC")
 
 def get_pdb_ids(accs):
-    # Map each UniProtAC to PDB ID
+    # Map each UniProt AC to PDB ID
     return map_id(accs, "ACC", "PDB_ID")
 
 def get_kegg_id(accs):
-    # Map each UniProtAC to KEGG ID
+    # Map each UniProt AC to KEGG ID
     return map_id(accs, "ACC", "KEGG_ID")
 
 def get_pdb_info(pdb_ids):
@@ -238,6 +241,8 @@ def get_pdb_info(pdb_ids):
 
 def get_chain_info(chains):
     # Get the following things of PDB chain:
+    #   * length of chain
+    #   * accession (UniProt AC)
     # chains is like [("1JU5", "C"), ("2BID", "A"), ...] (iterator is OK).
     url = constants.pdb_rest_url + "describeMol"
     params = {
@@ -307,7 +312,7 @@ def update_sqlite3db():
                     FROM mitoproteome"
             results = cursor.execute(select_query)
 
-            # conn.commit() # <- Is it necessary to write this line?
+            conn.commit()
     except sqlite3.Error as e:
         # print("ERROR at mitoproteome")
         sys.stderr.write("%s\n" % e)
@@ -332,7 +337,7 @@ def update_sqlite3db():
                     FROM gene_uniprot"
             results = cursor.execute(select_query)
 
-            # conn.commit() # <- Is it necessary to write this line?
+            conn.commit()
     except sqlite3.Error as e:
         # print("ERROR at entrez_gene")
         sys.stderr.write("%s\n" % e)
@@ -380,7 +385,7 @@ def update_sqlite3db():
                     FROM uniprot_pdb"
             results = cursor.execute(select_query)
 
-            # conn.commit() # <- Is it necessary to write this line?
+            conn.commit()
     except sqlite3.Error as e:
         # print("ERROR at uniprot")
         sys.stderr.write("%s\n" % e)
@@ -389,8 +394,8 @@ def update_sqlite3db():
     pdb_ids = map(lambda p: p[0], results)
     pdb_infos = get_with_sleep(get_pdb_info, pdb_ids)
 
-    pdb_info_tuples = concat_iterator(
-            *concat_iterator(
+    pdb_info_tuples = iterator_tools.concat_iterator(
+            *iterator_tools.concat_iterator(
                 *map(lambda t:
                     # t = (PDB ID,
                     #      resolution,
@@ -433,7 +438,7 @@ def update_sqlite3db():
                     FROM pdb_info"
             results = cursor.execute(select_query)
 
-            # conn.commit() # <- Is it necessary to write this line?
+            conn.commit()
     except sqlite3.Error as e:
         # print("ERROR at PDB")
         sys.stderr.write("%s\n" % e)
@@ -459,7 +464,7 @@ def update_sqlite3db():
                     FROM pdb_info"
             results = cursor.execute(select_query)
 
-            # conn.commit() # <- Is it necessary to write this line?
+            conn.commit()
     except sqlite3.Error as e:
         # print("ERROR at chain")
         sys.stderr.write("%s\n" % e)

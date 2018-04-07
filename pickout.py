@@ -64,10 +64,11 @@ def retrieve_all_data():
             # -------+----------+------------+---------------+------------+----------+---------+---------+--------
 
             cursor.execute(query)
-            query = "SELECT DISTINCT * FROM protein_csv"
+            query = "SELECT DISTINCT * FROM protein_csv" # Get all information
             results = cursor.execute(query)
 
             # conn.commit() # <- Is it necessary to write this line?
+            conn.commit()
     except sqlite3.Error as e:
         sys.stderr.write("%s\n" % e)
         quit(1)
@@ -77,4 +78,5 @@ def retrieve_all_data():
 def pickout_data(chain_list):
     results = retrieve_all_data()
     chain_list = [tuple(s.split("_")) for s in set(chain_list)]
+    # pick information on chains in chain_list out of all information
     return filter(lambda t: (t[0], t[1]) in chain_list, results)
