@@ -215,7 +215,7 @@ def get_pdb_info(pdb_ids):
             )
     resolutions = map(
             lambda node, method:
-            node.attrib["resolution"] if method == "xray" else None,
+            node.attrib["resolution"] if (method == "xray" and "resolution" in set(node.attrib.keys())) else None,
             pdb_nodes,
             methods
             )
