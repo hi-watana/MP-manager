@@ -29,7 +29,6 @@
 
 import urllib3
 import time
-from functools import reduce
 from itertools import chain
 import lxml.html
 import xml.etree.ElementTree as ET
@@ -58,14 +57,14 @@ def replace_table(cursor, table_name, schema_params, tuples):
 
     create_query = "CREATE TABLE IF NOT EXISTS %s (%s)" % (
             table_name,
-            reduce(lambda x, y: "%s, %s" % (x, y),
+            ", ".join(
                 ("%s %s" % t for t in schema_params.items()))
             )
     cursor.execute(create_query)
 
     insert_query = "INSERT INTO %s VALUES (%s)" % (
             table_name,
-            reduce(lambda x, y: "%s, %s" % (x, y),
+            ", ".join(
                 ("?" for i in range(len(schema_params))))
             # "? ? ... ?" (r"(\? ){n-1}\?")
             # n: number of parameters
@@ -134,15 +133,13 @@ def get_uniprot_info(accs):
             "organism",
             ]
     params = {
-            "query" : reduce(
-                lambda x, y:
-                x + " OR " + y,
+            "query" : " OR ".join(
                 map(lambda s:
                     "accession:" + s,
                     accs
                     )
                 ),
-            "columns" : reduce(lambda x, y: x + "," + y, columns),
+            "columns" : ",".join(columns),
             "format" : "tab",
             }
     data = get_data_online("GET", constants.uniprot_url, params)
@@ -167,7 +164,7 @@ def map_id(iterator, from_abbrev, to_abbrev):
             "from" : from_abbrev,
             "to" : to_abbrev,
             "format" : "tab",
-            "query" : reduce(lambda x, y: x + "," + y, iterator),
+            "query" : ",".join(iterator),
             }
     data = get_data_online("GET", constants.uniprot_mapping_url, params).strip()
     info_line = data.split("\n")[1:]
@@ -203,7 +200,7 @@ def get_pdb_info(pdb_ids):
     #   * chain ID
     url = constants.pdb_rest_url + "getEntityInfo"
     params = {
-            "structureId" : reduce(lambda x, y: x + "," + y, pdb_ids),
+            "structureId" : ",".join(pdb_ids),
             }
     xmldata = get_data_online("GET", url, params)
     tree = ET.fromstring(xmldata)
@@ -246,8 +243,7 @@ def get_chain_info(chains):
     # chains is like [("1JU5", "C"), ("2BID", "A"), ...] (iterator is OK).
     url = constants.pdb_rest_url + "describeMol"
     params = {
-            "structureId" : reduce(
-                lambda x, y: x + "," + y,
+            "structureId" : ",".join(
                 map(lambda t: # t = (pdb_id, chain_id)
                     t[0] + "." + t[1], # pdb_id + "." + chain_id
                     chains
