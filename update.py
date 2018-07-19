@@ -29,6 +29,7 @@
 
 import urllib3
 import time
+from functools import reduce
 from itertools import chain
 import lxml.html
 import xml.etree.ElementTree as ET
@@ -57,14 +58,14 @@ def replace_table(cursor, table_name, schema_params, tuples):
 
     create_query = "CREATE TABLE IF NOT EXISTS %s (%s)" % (
             table_name,
-            ", ".join(
+            reduce(lambda x, y: "%s, %s" % (x, y),
                 ("%s %s" % t for t in schema_params.items()))
             )
     cursor.execute(create_query)
 
     insert_query = "INSERT INTO %s VALUES (%s)" % (
             table_name,
-            ", ".join(
+            reduce(lambda x, y: "%s, %s" % (x, y),
                 ("?" for i in range(len(schema_params))))
             # "? ? ... ?" (r"(\? ){n-1}\?")
             # n: number of parameters
@@ -127,19 +128,20 @@ def get_uniprot_info(accs):
     #   * organism
     columns = [
             "id",
-            "entry",
             "protein names",
             "genes",
             "organism",
             ]
     params = {
-            "query" : " OR ".join(
+            "query" : reduce(
+                lambda x, y:
+                x + " OR " + y,
                 map(lambda s:
                     "accession:" + s,
                     accs
                     )
                 ),
-            "columns" : ",".join(columns),
+            "columns" : reduce(lambda x, y: x + "," + y, columns),
             "format" : "tab",
             }
     data = get_data_online("GET", constants.uniprot_url, params)
@@ -164,7 +166,7 @@ def map_id(iterator, from_abbrev, to_abbrev):
             "from" : from_abbrev,
             "to" : to_abbrev,
             "format" : "tab",
-            "query" : ",".join(iterator),
+            "query" : reduce(lambda x, y: x + "," + y, iterator),
             }
     data = get_data_online("GET", constants.uniprot_mapping_url, params).strip()
     info_line = data.split("\n")[1:]
@@ -200,7 +202,7 @@ def get_pdb_info(pdb_ids):
     #   * chain ID
     url = constants.pdb_rest_url + "getEntityInfo"
     params = {
-            "structureId" : ",".join(pdb_ids),
+            "structureId" : reduce(lambda x, y: x + "," + y, pdb_ids),
             }
     xmldata = get_data_online("GET", url, params)
     tree = ET.fromstring(xmldata)
@@ -243,7 +245,8 @@ def get_chain_info(chains):
     # chains is like [("1JU5", "C"), ("2BID", "A"), ...] (iterator is OK).
     url = constants.pdb_rest_url + "describeMol"
     params = {
-            "structureId" : ",".join(
+            "structureId" : reduce(
+                lambda x, y: x + "," + y,
                 map(lambda t: # t = (pdb_id, chain_id)
                     t[0] + "." + t[1], # pdb_id + "." + chain_id
                     chains
@@ -454,11 +457,6 @@ def update_sqlite3db():
                     }
             tuples = chain_infos
             replace_table(cursor, table_name, schema_params, tuples)
-
-            select_query = \
-                    "SELECT DISTINCT pdb_id, chain_id \
-                    FROM pdb_info"
-            results = cursor.execute(select_query)
 
             conn.commit()
     except sqlite3.Error as e:
