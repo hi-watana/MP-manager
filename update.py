@@ -58,7 +58,7 @@ def replace_table(cursor, table_name, schema_params, tuples):
     create_query = "CREATE TABLE IF NOT EXISTS %s (%s)" % (
             table_name,
             ", ".join(
-                ("%s %s" % t for t in schema_params.items()))
+                ("%s %s" % t for t in schema_params))
             )
     cursor.execute(create_query)
 
@@ -296,10 +296,10 @@ def update_sqlite3db():
         with sqlite3.connect(constants.sqlite3_dbpath) as conn:
             cursor = conn.cursor()
             table_name = "mitoproteome"
-            schema_params = {
-                    "mito_id" : "TEXT",
-                    "gene_id" : "INTEGER",
-                    }
+            schema_params = [
+                    ("mito_id", "TEXT"),
+                    ("gene_id", "INTEGER"),
+                    ]
             tuples = mitoproteome_tuples
             replace_table(cursor, table_name, schema_params, tuples)
 
@@ -321,10 +321,10 @@ def update_sqlite3db():
         with sqlite3.connect(constants.sqlite3_dbpath) as conn:
             cursor = conn.cursor()
             table_name = "gene_uniprot"
-            schema_params = {
-                    "gene_id" : "INTEGER",
-                    "uniprot_ac" : "TEXT",
-                    }
+            schema_params = [
+                    ("gene_id", "INTEGER"),
+                    ("uniprot_ac", "TEXT"),
+                    ]
             tuples = gene_id_uniprot_ac_pairs
             replace_table(cursor, table_name, schema_params, tuples)
 
@@ -351,28 +351,28 @@ def update_sqlite3db():
         with sqlite3.connect(constants.sqlite3_dbpath) as conn:
             cursor = conn.cursor()
             table_name = "uniprot_info"
-            schema_params = {
-                    "uniprot_ac" : "TEXT",
-                    "protein_names" : "TEXT",
-                    "gene_names" : "TEXT",
-                    "organism" : "TEXT",
-                    }
+            schema_params = [
+                    ("uniprot_ac", "TEXT"),
+                    ("protein_names", "TEXT"),
+                    ("gene_names", "TEXT"),
+                    ("organism", "TEXT"),
+                    ]
             tuples = uniprot_infos
             replace_table(cursor, table_name, schema_params, tuples)
 
             table_name = "uniprot_pdb"
-            schema_params = {
-                    "uniprot_ac" : "TEXT",
-                    "pdb_id" : "TEXT",
-                    }
+            schema_params = [
+                    ("uniprot_ac", "TEXT"),
+                    ("pdb_id", "TEXT"),
+                    ]
             tuples = uniprot_ac_pdb_id_pairs
             replace_table(cursor, table_name, schema_params, tuples)
 
             table_name = "uniprot_kegg"
-            schema_params = {
-                    "uniprot_ac" : "TEXT",
-                    "kegg_id" : "TEXT",
-                    }
+            schema_params = [
+                    ("uniprot_ac", "TEXT"),
+                    ("kegg_id", "TEXT"),
+                    ]
             tuples = uniprot_ac_kegg_id_pairs
             replace_table(cursor, table_name, schema_params, tuples)
 
@@ -420,12 +420,12 @@ def update_sqlite3db():
         with sqlite3.connect(constants.sqlite3_dbpath) as conn:
             cursor = conn.cursor()
             table_name = "pdb_info"
-            schema_params = {
-                    "pdb_id" : "TEXT",
-                    "resolution" : "REAL",
-                    "entity_id" : "INTEGER",
-                    "chain_id" : "TEXT",
-                    }
+            schema_params = [
+                    ("pdb_id", "TEXT"),
+                    ("resolution", "REAL"),
+                    ("entity_id", "INTEGER"),
+                    ("chain_id", "TEXT"),
+                    ]
             tuples = pdb_info_tuples
             replace_table(cursor, table_name, schema_params, tuples)
 
@@ -446,12 +446,12 @@ def update_sqlite3db():
         with sqlite3.connect(constants.sqlite3_dbpath) as conn:
             cursor = conn.cursor()
             table_name = "chain_info"
-            schema_params = {
-                    "pdb_id" : "TEXT",
-                    "chain_id" : "TEXT",
-                    "length" : "INTEGER",
-                    "uniprot_ac" : "TEXT",
-                    }
+            schema_params = [
+                    ("pdb_id", "TEXT"),
+                    ("chain_id", "TEXT"),
+                    ("length", "INTEGER"),
+                    ("uniprot_ac", "TEXT"),
+                    ]
             tuples = chain_infos
             replace_table(cursor, table_name, schema_params, tuples)
 
